@@ -15,21 +15,18 @@ class TooFactory:
         self.m_Config = toolConfig
 
     def RunTool(self):
+        tool = OperatorFactory(self.m_Config)
         if self.m_Config.OPERATETYPE == TOOLOPERATYPE.CREATE:
-            createTool = OperatorFactory(self.m_Config)
-            createTool.m_ToolOperator.CreatFormData()
+            tool.m_ToolOperator.CreatFormData()
         elif self.m_Config.OPERATETYPE == TOOLOPERATYPE.CREATRANDINSERT:
-            tool = OperatorFactory(self.m_Config)
             tool.m_ToolOperator.CreateAndInsert()
         elif self.m_Config.OPERATETYPE == TOOLOPERATYPE.INSERT:
-            tool = OperatorFactory(self.m_Config)
             tool.m_ToolOperator.InsertData()
         elif self.m_Config.OPERATETYPE == TOOLOPERATYPE.UPDATE:
-            tool = OperatorFactory(self.m_Config)
             tool.m_ToolOperator.UpdateData()
 
 
-def CreateCopyRaster(sourcefilename, targetfilename):
+def CreateCopyRaster(sourcefilename, targetfilename, newValue):
     '''GeoTiff拷贝，新数据只包含一个数据'''
     fileformat = "GTiff"
     driver = gdal.GetDriverByName(fileformat)
@@ -43,18 +40,18 @@ def CreateCopyRaster(sourcefilename, targetfilename):
                                options=["TILED=YES", "COMPRESS=PACKBITS"])
     # Once we're done, close properly the dataset
     band = dst_ds.GetRasterBand(1)
-    raster = numpy.zeros((band.YSize,band.XSize), dtype=numpy.uint16)
+    raster = numpy.zeros((band.YSize, band.XSize), dtype=numpy.uint16)
     for index in range(len(raster)):
         rows = raster[index]
         for rowindex in range(len(rows)):
-            rows[rowindex] = 12
+            rows[rowindex] = newValue
     dst_ds.GetRasterBand(1).WriteArray(raster)
     dst_ds = None
     src_ds = None
 
 
 if __name__ == "__main__":
-    geotool=TooFactory(config)
+    geotool = TooFactory(config)
     geotool.RunTool()
     print "操作成功"
-    # CreateCopyRaster('F:\\newtif\\New Folder\\sz_3857_smzx.tif','F:\\temp\\new4.tif')
+    # CreateCopyRaster('F:\\hefei\\clip\\4c90631948e5448b8a1caeb75b8c0c21.tif','F:\\temp\\jxsfz.tif',40)

@@ -19,14 +19,16 @@ class DbOperator:
     m_session = None
     m_importType = 0
     m_metadata = None
+    m_config = None
 
-    def __init__(self, strconnect, importType):
+    def __init__(self, strconnect, importType, toolconfig):
         self.m_connect = strconnect
         self.m_engine = create_engine(strconnect, echo=False)
         Session = sessionmaker(bind=self.m_engine)
         self.m_session = Session()
         self.m_importType = importType
         self.m_metadata = MetaData()
+        self.m_config = toolconfig
 
     def CreateTable(self, importlayer):
         '''根据图层信息创建表'''
@@ -133,7 +135,9 @@ class DbOperator:
         elif geometry_type == ogr.wkbGeometryCollection:
             return Column('geom', Geometry(geometry_type='GEOMETRYCOLLECTION', srid=Srid_Value))
         elif geometry_type == ogr.wkbCurve:
-            return Column('geom', Geometry(geometry_type='CURVE', srid=Srid_Value))
+            return Column('geom', Geometry(geometry_type='GEOMETRY', srid=Srid_Value))
+        elif geometry_type == ogr.wkbMultiCurve:
+            return Column('geom', Geometry(geometry_type='GEOMETRY', srid=Srid_Value))
         else:
             return Column('geom', Geometry(geometry_type='POINT', srid=Srid_Value))
 
@@ -217,6 +221,38 @@ class DbOperator:
             conn.execute(insertTable.insert(), insetData)
         print "完成对图层：%s的导入" % imLayer.GetName()
 
+    def CommitInsert(self, insertTable, insertData):
+        '''插入数据到数据库'''
+        if self.m_engine is not None and self.m_engine.connect() is not None:
+            try:
+                self.m_engine.connect().execute(insertTable.insert(), insertData)
+            except:
+                return "写入数据库有误"
+        else:
+            return "数据库未连接"
+
+    def CommitUpdate(self, updateTable, updateData):
+        '''提交更新数据'''
+        if self.m_engine is not None and self.m_engine.connect() is not None:
+            try:
+                # self.m_engine.connect().execute(updateTable.)
+                print "UpdateData %s" % updateData
+            except:
+                return "数据更新到数据库有误"
+        else:
+            return "数据库未连接"
+
+    def CommitDelete(self, deleteDatble, deleteData):
+        '''提交删除数据'''
+        if self.m_engine is not None and self.m_engine.connect() is not None:
+            try:
+                # self.m_engine.connect().execute(updateTable.)
+                print "DeleteData %s" % deleteData
+            except:
+                return "删除数据库数据有误"
+        else:
+            return "数据库未连接"
+
     def InsertIearthData(self, insertTable, imLayer, srid=-1):
         """向数据库中插入数据"""
         featDic = {}
@@ -287,8 +323,8 @@ class DbOperator:
             # featDic['gis_name'] = layertName
             for i in range(fieldCount):
                 field_defn = feat_defn.GetFieldDefn(i)
-                if field_defn.GetName().lower() == 'shape_length' or field_defn.GetName().lower() == 'shape_area' or field_defn.GetName().lower() == 'shape_leng'\
-                         or field_defn.GetName().lower() == 'id':
+                if field_defn.GetName().lower() == 'shape_length' or field_defn.GetName().lower() == 'shape_area' or field_defn.GetName().lower() == 'shape_leng' \
+                        or field_defn.GetName().lower() == 'id':
                     continue
                 if field_defn.GetName().lower() == 'name':
                     featDic['areaname'] = feat.GetField(i)
@@ -336,21 +372,21 @@ class DbOperator:
         '''坐标系'''
         newtable.append_column(Column('projectinfo', String(50)))
         '''创建时间'''
-        newtable.append_column(Column('createtime', DateTime,default=datetime.datetime.now()))
+        newtable.append_column(Column('createtime', DateTime, default=datetime.datetime.now()))
         '''更新时间'''
         newtable.append_column(Column('updatetime', DateTime))
         '''状态:0 新增 1 修改 2 删除'''
-        newtable.append_column(Column('status', Integer,default=0))
+        newtable.append_column(Column('status', Integer, default=0))
         '''同步状态:0 已同步 1 未同步'''
-        newtable.append_column(Column('syncstatus', Integer,default=1))
+        newtable.append_column(Column('syncstatus', Integer, default=1))
         '''审核状态:0 未审核 1 已审核'''
-        newtable.append_column(Column('checkstatus', Integer,default=0))
+        newtable.append_column(Column('checkstatus', Integer, default=0))
         '''审核用户标识'''
         newtable.append_column(Column('checkuser', String(50)))
         '''审核时间'''
         newtable.append_column(Column('checktime', DateTime))
-        newtable.append_column(Column('geom', Geometry('MULTIPOLYGON',srid=4326)))
-        #直接调用创建操作创建表
+        newtable.append_column(Column('geom', Geometry('MULTIPOLYGON', srid=4326)))
+        # 直接调用创建操作创建表
         newtable.create(self.m_engine)
         self.m_metadata.create_all(self.m_engine)
         return [newtable, 4326]

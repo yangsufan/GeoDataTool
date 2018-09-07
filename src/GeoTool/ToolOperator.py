@@ -10,7 +10,7 @@ class ToolOperator:
 
     def __init__(self, toolconfig):
         self.m_Config = toolconfig
-        self.m_dbOpera = DbOperator(self.m_Config.DATABASE_URL, self.m_Config.IMPORT_DATA_TYPE)
+        self.m_dbOpera = DbOperator(self.m_Config.DATABASE_URL, self.m_Config.IMPORT_DATA_TYPE, self.m_Config)
 
     def CreatFormData(self, dataset=None, layernames=[]):
         '''根据相关数据生成表结构，不导入数据'''
@@ -43,12 +43,12 @@ class ToolOperator:
                 if layername not in layernames:
                     continue
             insertTable = None
-            if  self.m_Config.IMPORT_IEARTHTYPE==1:
+            if self.m_Config.IMPORT_IEARTHTYPE == 1:
                 insertTable = self.m_dbOpera.GetIearthTahle()
-            elif self.m_Config.IMPORT_IEARTHTYPE==2:
-                insertTable=self.m_dbOpera.CreateIearthAreaTable()
+            elif self.m_Config.IMPORT_IEARTHTYPE == 2:
+                insertTable = self.m_dbOpera.CreateIearthAreaTable()
             else:
-                insertTable =self.m_dbOpera.GetTable(layer)
+                insertTable = self.m_dbOpera.GetTable(layer)
             if insertTable is not None:
                 print "表:%s获取成功" % layer.GetName()
             else:
@@ -56,14 +56,12 @@ class ToolOperator:
                 continue
                 #             导入操作
             print "开始对图层:%s进行导入操作" % layer.GetName()
-            if self.m_Config.IMPORT_IEARTHTYPE==1:
+            if self.m_Config.IMPORT_IEARTHTYPE == 1:
                 self.m_dbOpera.InsertIearthData(insertTable[0], layer, insertTable[1])
-            elif self.m_Config.IMPORT_IEARTHTYPE==2:
+            elif self.m_Config.IMPORT_IEARTHTYPE == 2:
                 self.m_dbOpera.InsertAreaData(insertTable[0], layer, insertTable[1])
             else:
                 self.m_dbOpera.InsertData(insertTable[0], layer, insertTable[1])
-
-
 
     def CreateAndInsert(self, dataset=None, layernames=[]):
         '''创建数据并导入数据'''
@@ -93,6 +91,7 @@ class ToolOperator:
     def OpenData(self):
         '''打开数据'''
         pass
+
     def ExportData(self):
         '''将数据库文件导出'''
         pass
