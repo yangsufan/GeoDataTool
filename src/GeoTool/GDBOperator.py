@@ -31,4 +31,6 @@ class GDBOperator(ToolOperator):
         ToolOperator.CreateAndInsert(self, dataset)
 
     def UpdateData(self):
+        dataset=self.OpenData()
+        ToolOperator.UpdateData(self,dataset)
         pass

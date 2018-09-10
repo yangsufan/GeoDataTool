@@ -84,9 +84,35 @@ class ToolOperator:
             print "开始对图层:%s进行导入操作" % layer.GetName()
             self.m_dbOpera.InsertData(insertTable[0], layer, insertTable[1])
 
-    def UpdateData(self):
-        '''更新数据'''
-        pass
+    def UpdateData(self, dataset=None, layernames=[]):
+        """
+        更新数据
+        dataset:需要进行操作的数据集
+        layernames:需要操作的图层列表
+        """
+        if dataset is None:
+            print "无更新数据源"
+            return
+        LayerCount = dataset.GetLayerCount()
+        print "开始更新数据..."
+        for i in range(LayerCount):
+            layer = dataset.GetLayer(i)
+            layername = layer.GetName()
+            if layernames is not None and len(layernames) > 0:
+                if layername not in layernames:
+                    continue
+            updateTable = self.m_dbOpera.GetTable(layer)
+            if updateTable is not None:
+                print "表:%获取成功" % layer.GetName()
+            else:
+                print "表:%s获取失败" % layer.GetName()
+                continue
+                #             导入操作
+            print "开始对图层:%s进行更新操作" % layer.GetName()
+            try:
+                self.m_dbOpera.UpdateData(updateTable[0], layer, updateTable[1])
+            except:
+                print "图层更新异常: %s" % layername
 
     def OpenData(self):
         '''打开数据'''

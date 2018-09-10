@@ -48,15 +48,22 @@ class IEARTHDATATYPE:
 
 # 工具配置
 class config:
+    '''数据库配置'''
     DATABASE_URL = "postgresql://dev:asdasd123@192.168.1.158/sz_db"
     # DATABASE_URL = "postgresql://dba_iearth:fengdays0105@10.28.11.7/db_iearth_gis"
     # DATABASE_URL = "postgresql://dba_iearth:fengdays0105@192.168.1.201/db_iearth_gis"
+    '''导入文件类型'''
     Enum = importdatatype()
     IMPORT_DATA_TYPE = Enum.FILEGEODATABASE
-    IMPORTFILENAME = 'F:\\ygc\\20180825\\vearth.gdb'
-    OPERATETYPE = TOOLOPERATYPE.CREATRANDINSERT
+    '''导入文件路径'''
+    IMPORTFILENAME = 'F:\\ygc\\20180825\\vearth_1.gdb'
+    '''导入方式，如果数据库中有表，则使用更新方式；如果没有表则使用创建并导入的方式'''
+    OPERATETYPE = TOOLOPERATYPE.UPDATE
+    '''导入数据类型，后续可以不用这个配置'''
     IMPORT_IEARTHTYPE = IEARTHDATATYPE.OTHER
-    '''全局ID'''
+    '''全局ID字段'''
     FEATUREID = "globalid"
     '''忽略字段，表示这些字段将不会导入和更新到数据库中'''
     IGNORFIELD = ['shape_length', 'shape_area']
+    '''同步状态字段'''
+    STATUSFILED='status'
