@@ -73,7 +73,6 @@ class ToolOperator:
             if layernames is not None and len(layernames) > 0:
                 if layername not in layernames:
                     continue
-            insertTable = None
             insertTable = self.m_dbOpera.CreateTable(layer)
             if insertTable is not None:
                 print "表:%s创建成功" % layer.GetName()
@@ -103,7 +102,7 @@ class ToolOperator:
                     continue
             updateTable = self.m_dbOpera.GetTable(layer)
             if updateTable is not None:
-                print "表:%获取成功" % layer.GetName()
+                print "表:%s获取成功" % layer.GetName()
             else:
                 print "表:%s获取失败" % layer.GetName()
                 continue

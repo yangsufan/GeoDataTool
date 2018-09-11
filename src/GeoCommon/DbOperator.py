@@ -223,37 +223,67 @@ class DbOperator:
 
     def UpdateData(self, updateTable, upLayer, srid=-1):
         """向数据库中更新数据"""
-        conn = self.m_engine.connect()
         feat_defn = upLayer.GetLayerDefn()
         fieldCount = feat_defn.GetFieldCount()
-        updateCount = 0
-        totalUpdateCount = 0
+        totalInsertCount = 0
+        insertCount = 0
         insetData = []
         featureCount = upLayer.GetFeatureCount()
         for feat in upLayer:
-
-            featDic=self.GetFeatureInfo(feat,feat_defn,fieldCount,srid)
-            insetData.append(featDic.copy())
-            insertCount = insertCount + 1
+            updateStatus = feat.GetFieldAsInteger(self.m_config.STATUSFILED)
             totalInsertCount = totalInsertCount + 1
+            if updateStatus is None:
+                # 如果无法获取更新状态字段，则不更新这个数据
+                continue
+            if updateStatus == 0:
+                # 已更新,不处理
+                continue
+            elif updateStatus == 1:
+                # 新增数据
+                insertFeatureDic = self.GetInsertFeatureInfo(feat, feat_defn, fieldCount, srid)
+                insetData.append(insertFeatureDic.copy())
+                insertCount = insertCount + 1
+            else:
+                # 更新数据
+                updataFeatureDic = self.GetUpdateFeatureInfo(feat, feat_defn, fieldCount, srid)
+                self.CommitUpdate(updateTable, updataFeatureDic)
             insertper = totalInsertCount / (featureCount * 1.0) * 100
+            print "已完成导入：%s" % round(insertper, 2)
             if insertCount == 1000:
-                conn.execute(updateTable.insert(), insetData)
+                self.CommitInsert(updateTable, insetData)
                 insertCount = 0
                 insetData = []
-                print "已完成导入：%s" % round(insertper, 2)
         if insertCount != 0:
-            conn.execute(updateTable.insert(), insetData)
+            self.CommitInsert(updateTable, insetData)
         print "完成对图层：%s的导入" % upLayer.GetName()
-        pass
 
-    def GetFeatureInfo(self,feature,featureDef,fieldnum,srid=-1):
-        featDic={}
+    def GetInsertFeatureInfo(self, feature, featureDef, fieldnum, srid=-1):
+        featDic = {}
         for i in range(fieldnum):
             field_defn = featureDef.GetFieldDefn(i)
-            featDic[field_defn.GetName().lower()] = feature.GetField(i)
+            fieldName = field_defn.GetName().lower()
+            if fieldName in self.m_config.IGNORFIELD:
+                continue
+            featDic[fieldName] = feature.GetField(i)
         if feature.GetFID() is not None:
             featDic['fid'] = feature.GetFID()
+            # 获取图形信息
+        geom = feature.GetGeometryRef()
+        wkt_geom = geom.ExportToIsoWkt()
+        if srid != -1:
+            featDic['geom'] = 'SRID=' + str(srid) + ';' + wkt_geom
+        else:
+            featDic['geom'] = wkt_geom
+        return featDic
+
+    def GetUpdateFeatureInfo(self, feature, featureDef, fieldnum, srid=-1):
+        featDic = {}
+        for i in range(fieldnum):
+            field_defn = featureDef.GetFieldDefn(i)
+            fieldName = field_defn.GetName().lower()
+            if fieldName in self.m_config.IGNORFIELD:
+                continue
+            featDic[fieldName] = feature.GetField(i)
             # 获取图形信息
         geom = feature.GetGeometryRef()
         wkt_geom = geom.ExportToIsoWkt()
@@ -269,7 +299,7 @@ class DbOperator:
             try:
                 self.m_engine.connect().execute(insertTable.insert(), insertData)
             except:
-                return "写入数据库有误"
+                print  "写入数据库有误"
         else:
             return "数据库未连接"
 
@@ -277,13 +307,13 @@ class DbOperator:
         '''提交更新数据'''
         if self.m_engine is not None and self.m_engine.connect() is not None:
             try:
-                smt = updateTable.update().where(updateTable.globalid == updateData[self.m_config.FEATUREID]).values()
+                smt = updateTable.update().where(updateTable.c.globalid == updateData[self.m_config.FEATUREID]). \
+                    values(updateData)
                 self.m_engine.connect().execute(smt)
-                print "UpdateData %s" % updateData
             except:
-                return "数据更新到数据库有误"
+                print "数据更新到数据库有误;%s" % updateData[self.m_config.FEATUREID]
         else:
-            return "数据库未连接"
+            print "数据库未连接"
 
     def CommitDelete(self, deleteDatble, deleteData):
         '''提交删除数据'''
