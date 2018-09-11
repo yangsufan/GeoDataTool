@@ -110,6 +110,7 @@ class ToolOperator:
             print "开始对图层:%s进行更新操作" % layer.GetName()
             try:
                 self.m_dbOpera.UpdateData(updateTable[0], layer, updateTable[1])
+                self.updateFeatureStatus(layer)
             except:
                 print "图层更新异常: %s" % layername
 
@@ -120,3 +121,17 @@ class ToolOperator:
     def ExportData(self):
         '''将数据库文件导出'''
         pass
+
+    def updateFeatureStatus(self, uLayer):
+        '''更新完数据库后，需要修改源文件的状态'''
+        print '开始更新源数据....'
+        filterStr = self.m_Config.STATUSFILED + '<>0'
+        uLayer.SetAttributeFilter(filterStr)
+        uLayer.StartTransaction()
+        feat = uLayer.GetNextFeature()
+        while feat is not None:
+            feat.SetField(self.m_Config.STATUSFILED, 0)
+            uLayer.SetFeature(feat)
+            uLayer.CommitTransaction()
+            feat = uLayer.GetNextFeature()
+        print '源数据更新完成'

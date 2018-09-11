@@ -11,7 +11,7 @@ class GDBOperator(ToolOperator):
 
     def OpenData(self):
         """打开FileGDB"""
-        ds = gdal.OpenEx(self.m_Config.IMPORTFILENAME, gdal.OF_VECTOR)
+        ds = gdal.OpenEx(self.m_Config.IMPORTFILENAME, gdal.OF_UPDATE)
         if ds is None:
             print "Open FileGeodataBase failed.%s\n" % self.m_Config.IMPORTFILENAME
             sys.exit(1)
@@ -19,11 +19,11 @@ class GDBOperator(ToolOperator):
 
     def CreatFormData(self):
         dataset = self.OpenData()
-        ToolOperator.CreatFormData(self,dataset)
+        ToolOperator.CreatFormData(self, dataset)
 
     def InsertData(self):
         dataset = self.OpenData()
-        ToolOperator.InsertData(self,dataset)
+        ToolOperator.InsertData(self, dataset)
         pass
 
     def CreateAndInsert(self):
@@ -31,6 +31,6 @@ class GDBOperator(ToolOperator):
         ToolOperator.CreateAndInsert(self, dataset)
 
     def UpdateData(self):
-        dataset=self.OpenData()
-        ToolOperator.UpdateData(self,dataset)
+        dataset = self.OpenData()
+        ToolOperator.UpdateData(self, dataset)
         pass
