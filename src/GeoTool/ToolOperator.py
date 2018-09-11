@@ -82,6 +82,7 @@ class ToolOperator:
                 #             导入操作
             print "开始对图层:%s进行导入操作" % layer.GetName()
             self.m_dbOpera.InsertData(insertTable[0], layer, insertTable[1])
+            self.updateFeatureStatus(layer)
 
     def UpdateData(self, dataset=None, layernames=[]):
         """
