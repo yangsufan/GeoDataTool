@@ -1,9 +1,11 @@
 # coding=UTF-8
+import traceback
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData, Date, LargeBinary, DateTime, BigInteger, \
     Float
 from sqlalchemy.orm import sessionmaker
 from osgeo import ogr
+from osgeo.osr import SpatialReference
 from geoalchemy2 import Geometry
 import uuid
 import json
@@ -149,11 +151,9 @@ class DbOperator:
         feat_defn = importlayer.GetLayerDefn()
         geometry_defn = feat_defn.GetGeomFieldDefn(0)
         spatial_ref = geometry_defn.GetSpatialRef()
-        #  查询数据库表来获取Srid
-        out_spatial = self.m_session.query(Spatial).filter_by(proj4text=spatial_ref.ExportToProj4()).first()
-        srid = -1
-        if out_spatial is not None:
-            srid = out_spatial.auth_srid
+        srid = spatial_ref.GetAttrValue("AUTHORITY", 1)
+        if srid is None:
+            srid = -1
         fieldCount = feat_defn.GetFieldCount()
         newtable = Table(importlayer.GetName().lower(), self.m_metadata)
         newtable.append_column(Column('fid', Integer, primary_key=True))
@@ -195,6 +195,9 @@ class DbOperator:
         insetData = []
         featureCount = imLayer.GetFeatureCount()
         for feat in imLayer:
+            updateStatus = feat.GetFieldAsInteger(self.m_config.STATUSFILED)
+            # if updateStatus != 1:
+            #     continue
             for i in range(fieldCount):
                 field_defn = feat_defn.GetFieldDefn(i)
                 featDic[field_defn.GetName().lower()] = feat.GetField(i)
@@ -203,6 +206,8 @@ class DbOperator:
             # 获取图形信息
             geom = feat.GetGeometryRef()
             wkt_geom = geom.ExportToIsoWkt()
+            if not wkt_geom.strip():
+                continue
             if srid != -1:
                 featDic['geom'] = 'SRID=' + str(srid) + ';' + wkt_geom
             else:
@@ -241,12 +246,14 @@ class DbOperator:
             elif updateStatus == 1:
                 # 新增数据
                 insertFeatureDic = self.GetInsertFeatureInfo(feat, feat_defn, fieldCount, srid)
-                insetData.append(insertFeatureDic.copy())
-                insertCount = insertCount + 1
+                if insertFeatureDic is not None:
+                    insetData.append(insertFeatureDic.copy())
+                    insertCount = insertCount + 1
             else:
                 # 更新数据
                 updataFeatureDic = self.GetUpdateFeatureInfo(feat, feat_defn, fieldCount, srid)
-                self.CommitUpdate(updateTable, updataFeatureDic)
+                if updataFeatureDic is not None:
+                    self.CommitUpdate(updateTable, updataFeatureDic)
             insertper = totalInsertCount / (featureCount * 1.0) * 100
             print "已完成导入：%s" % round(insertper, 2)
             if insertCount == 1000:
@@ -270,8 +277,11 @@ class DbOperator:
             # 获取图形信息
         geom = feature.GetGeometryRef()
         wkt_geom = geom.ExportToIsoWkt()
+        if not wkt_geom.strip():
+            return None
         if srid != -1:
             featDic['geom'] = 'SRID=' + str(srid) + ';' + wkt_geom
+            print 'Srid=%s' % srid
         else:
             featDic['geom'] = wkt_geom
         return featDic
@@ -287,8 +297,11 @@ class DbOperator:
             # 获取图形信息
         geom = feature.GetGeometryRef()
         wkt_geom = geom.ExportToIsoWkt()
+        if not wkt_geom.strip():
+            return None
         if srid != -1:
             featDic['geom'] = 'SRID=' + str(srid) + ';' + wkt_geom
+            print 'Srid=%s' % srid
         else:
             featDic['geom'] = wkt_geom
         return featDic
@@ -300,6 +313,7 @@ class DbOperator:
                 self.m_engine.connect().execute(insertTable.insert(), insertData)
             except:
                 print  "写入数据库有误"
+                print(traceback.format_exc())
         else:
             return "数据库未连接"
 

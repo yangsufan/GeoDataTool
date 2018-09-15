@@ -56,9 +56,11 @@ class config:
     Enum = importdatatype()
     IMPORT_DATA_TYPE = Enum.FILEGEODATABASE
     '''导入文件路径'''
-    IMPORTFILENAME = 'F:\\ygc\\20180825\\vearth_1.gdb'
+    IMPORTFILENAME = 'E:\\dataimport\\20180913\\vearth_1.gdb'
     '''导入方式，如果数据库中有表，则使用更新方式；如果没有表则使用创建并导入的方式'''
+    # OPERATETYPE = TOOLOPERATYPE.CREATRANDINSERT
     OPERATETYPE = TOOLOPERATYPE.UPDATE
+    # OPERATETYPE = TOOLOPERATYPE.INSERT
     '''导入数据类型，后续可以不用这个配置'''
     IMPORT_IEARTHTYPE = IEARTHDATATYPE.OTHER
     '''全局ID字段'''

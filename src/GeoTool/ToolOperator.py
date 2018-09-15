@@ -113,7 +113,7 @@ class ToolOperator:
                 self.m_dbOpera.UpdateData(updateTable[0], layer, updateTable[1])
                 self.updateFeatureStatus(layer)
             except:
-                print "图层更新异常: %s" % layername
+                print "Update Layer Error: %s" % layername
 
     def OpenData(self):
         '''打开数据'''
@@ -125,7 +125,7 @@ class ToolOperator:
 
     def updateFeatureStatus(self, uLayer):
         '''更新完数据库后，需要修改源文件的状态'''
-        print '开始更新源数据....'
+        print 'Start Upate Source Data....'
         filterStr = self.m_Config.STATUSFILED + '<>0'
         uLayer.SetAttributeFilter(filterStr)
         uLayer.StartTransaction()
@@ -135,4 +135,4 @@ class ToolOperator:
             uLayer.SetFeature(feat)
             uLayer.CommitTransaction()
             feat = uLayer.GetNextFeature()
-        print '源数据更新完成'
+        print 'Souce Data Has Updated!'
