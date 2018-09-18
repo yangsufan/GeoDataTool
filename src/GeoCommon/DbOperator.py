@@ -5,7 +5,6 @@ from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData, 
     Float
 from sqlalchemy.orm import sessionmaker
 from osgeo import ogr
-from osgeo.osr import SpatialReference
 from geoalchemy2 import Geometry
 import uuid
 import json
